@@ -17,7 +17,7 @@ def list():
         repos = engine.read()["repos"]
     except GixException as e:
         console.print(e.message, style="bold red")
-        raise typer.Exit()
+        raise typer.Exit(code=1)
 
     console.print(f"\n[bold cyan]Parent Repository[/bold cyan]")
     console.print(f"  {Path(gix_path).parent}\n")
@@ -44,7 +44,7 @@ def add(alias: str):
         engine.append(alias, Path.cwd())
     except GixException as e:
         console.print(e.message, style="bold red")
-        raise typer.Exit()
+        raise typer.Exit(code=1)
 
 
 @alias_subcommand.command()
@@ -55,7 +55,7 @@ def rename(old_alias_name, new_alias_name):
         engine.rename_alias(old_alias_name, new_alias_name)
     except GixException as e:
         console.print(e.message, style="bold red")
-        raise typer.Exit()
+        raise typer.Exit(code=1)
 
 
 @alias_subcommand.command()
@@ -66,7 +66,7 @@ def delete(alias: str):
         engine.delete(alias)
     except GixException as e:
         console.print(e.message, style="bold red")
-        raise typer.Exit()
+        raise typer.Exit(code=1)
 
 
 # Don't expose update command right now as it would be a bit confusing to use

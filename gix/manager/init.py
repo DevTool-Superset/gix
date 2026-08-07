@@ -7,12 +7,14 @@ from gix.manager.fetch_existing_repos import fetch_existing_git_repos
 
 
 def create_config(path, overwrite=False):
-    if not str(path).endswith("gix.toml"):
+    path = str(path)
+    if not path.endswith("gix.toml"):
         path = f"{path}/gix.toml"
 
-    if not overwrite and os.path.exists(path):
-        raise AlreadyInitializedException(path.strip("gix.toml"))
-    elif overwrite:
+    exists = os.path.exists(path)
+    if not overwrite and exists:
+        raise AlreadyInitializedException(path.removesuffix("gix.toml"))
+    if overwrite and exists:
         os.remove(path)
     with open(path, "a"):
         os.utime(path, None)
@@ -36,8 +38,8 @@ def init_gix_list(
     create_config(gix_file, overwrite)
     config = RepoCRUDEngine(gix_file)
     if not fetch_existing_child_repos:
-        return config.read()
+        return {}
     existing_repos = fetch_existing_git_repos(cwd)
     for name in existing_repos:
         config.append(name, existing_repos[name])
-    return config.read()
+    return dict(config.read()["repos"])

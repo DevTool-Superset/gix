@@ -12,6 +12,32 @@ from gix.manager.init import init_gix_list
 from typer.core import TyperGroup
 
 
+def run_git_for_alias(alias: str, git_args: list[str]) -> None:
+    """Resolve an alias to its repo path and run `git <git_args>` there.
+
+    Exits with the underlying git process's return code on success, or
+    with a nonzero code and an error message if the alias/config can't
+    be resolved.
+    """
+    try:
+        gix_path, engine = build_engine_from_parent_gix_repo(Path.cwd())
+        resolved = engine.read()["repos"].get(alias)
+
+        if not resolved:
+            raise AliasNotFoundError(alias)
+
+        result = subprocess.run(
+            ["git", *git_args],
+            cwd=resolved,
+        )
+
+        raise typer.Exit(code=result.returncode)
+
+    except GixException as e:
+        console.print(e.message, style="bold red")
+        raise typer.Exit(code=1)
+
+
 class AliasCommand(click.Command):
     def __init__(self):
         super().__init__(
@@ -21,26 +47,7 @@ class AliasCommand(click.Command):
 
     def run_alias(self, **kwargs):
         ctx = click.get_current_context()
-        alias = ctx.obj["alias"]
-        git_args = ctx.obj["git_args"]
-
-        try:
-            gix_path, engine = build_engine_from_parent_gix_repo(Path.cwd())
-            resolved = engine.read()["repos"].get(alias)
-
-            if not resolved:
-                raise AliasNotFoundError(alias)
-
-            result = subprocess.run(
-                ["git", *git_args],
-                cwd=resolved,
-            )
-
-            raise typer.Exit(code=result.returncode)
-
-        except GixException as e:
-            console.print(e.message, style="bold red")
-            raise typer.Exit()
+        run_git_for_alias(ctx.obj["alias"], ctx.obj["git_args"])
 
 
 class GixGroup(TyperGroup):
@@ -71,7 +78,11 @@ app.add_typer(alias_subcommand, name="alias")
 
 def version_callback(value: bool):
     if value:
-        typer.echo(f"Current gix version is {importlib.metadata.version('gix')}")
+        try:
+            version = importlib.metadata.version("gix-cli")
+        except importlib.metadata.PackageNotFoundError:
+            version = "unknown (not installed as a package)"
+        typer.echo(f"Current gix version is {version}")
         raise typer.Exit()
 
 
@@ -87,21 +98,7 @@ def main(
     ),
 ):
     if ctx.obj.get("alias"):
-        alias = ctx.obj["alias"]
-        git_args = ctx.obj["git_args"]
-        try:
-            gix_path, engine = build_engine_from_parent_gix_repo(Path.cwd())
-            resolved = engine.read()["repos"].get(alias)
-            if not resolved:
-                raise AliasNotFoundError(alias)
-            result = subprocess.run(
-                ["git", *git_args],
-                cwd=resolved,
-            )
-            raise typer.Exit(code=result.returncode)
-        except GixException as e:
-            console.print(e.message, style="bold red")
-            raise typer.Exit()
+        run_git_for_alias(ctx.obj["alias"], ctx.obj["git_args"])
 
 
 @app.command()
@@ -127,6 +124,6 @@ def init(
             )
     except GixException as e:
         console.print(e.message, style="bold red")
-        raise typer.Exit()
+        raise typer.Exit(code=1)
     else:
         console.print(f"Initialized gix list in {cwd}", style="green")
