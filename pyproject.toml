@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gix-cli"
-version = "0.1.2"
+version = "1.0.0"
 readme = "README.md"
 description = "CLI tool for managing multiple git sub-repositories"
 requires-python = ">=3.12"
