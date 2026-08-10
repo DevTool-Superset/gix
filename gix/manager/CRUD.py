@@ -94,6 +94,11 @@ class RepoCRUDEngine:
         repos[alias] = str(new_working_dir)
         self._write(doc)
 
+    @validate_toml_path
+    def fetch_aliases(self):
+        doc = self.read()
+        return doc["repos"].keys()
+
     def _write(self, data):
         try:
             with open(self.toml_path, "w", encoding="utf-8") as f:

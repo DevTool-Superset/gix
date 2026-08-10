@@ -7,6 +7,7 @@ Requires Python 3.12+.
 
 ```bash
 pip install --upgrade gix-cli
+gix --install-completion
 ```
 
 Check your installed version:

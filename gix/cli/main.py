@@ -64,12 +64,28 @@ class GixGroup(TyperGroup):
 
         return super().resolve_command(ctx, args)
 
+    def shell_complete(self, ctx, incomplete):
+        completions = super().shell_complete(ctx, incomplete)
+        if ctx.obj:
+            return completions
+        try:
+            gix_path, engine = build_engine_from_parent_gix_repo(Path.cwd())
+            aliases = engine.fetch_aliases()
+        except GixException:
+            aliases = []
+        completions.extend(
+            click.shell_completion.CompletionItem(alias)
+            for alias in aliases
+            if alias.startswith(incomplete)
+        )
+        return completions
+
 
 app = typer.Typer(
     help="Manage multiple git subrepositories from a single parent repository",
     no_args_is_help=True,
     pretty_exceptions_enable=False,
-    add_completion=False,
+    add_completion=True,
     cls=GixGroup,
     context_settings={"obj": {}},
 )
