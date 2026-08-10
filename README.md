@@ -83,9 +83,7 @@ gix backend log -5
 ## How it works
 
 ```python
-result = subprocess.run(
-    ["git", *git_args],
-    cwd=engine.read()["repos"].get(alias))
+result = subprocess.run(["git", *git_args], cwd=engine.read()["repos"].get(alias))
 ```
 
 ## Notes
