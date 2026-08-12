@@ -92,3 +92,25 @@ result = subprocess.run(["git", *git_args], cwd=engine.read()["repos"].get(alias
 - `gix` doesn't do anything to your actual git repos. Tt only manages the
   alias-to-path mapping.
 - If `gix.toml` gets deleted or corrupted, just run `gix init` again.
+
+## A few words on autocompletion
+gix exposes its own commands as well as aliases where appropriate via
+```
+gix --install-completion
+```
+Make sure your terminal is compatible with autocompletion that goes beyond file system references.
+
+Where it get's more complicated is with exposing native git autocompletion through gix, to stay branch-aware for example.
+
+The native [git-completion.bash](https://github.com/git/git/blob/master/contrib/completion/git-completion.bash) is over 4000 lines long and doesn't expose the completion for external use. \
+After long debates the decision was made to emulate a native terminal running git in the working directory, simulating a [TAB] press and exposing the result through gix. \
+This comes with performance and latency problems but at least in bashed based environments it's practical and feasible. \
+The absolute pain of 1970s development decisions when it comes to terminals is thankfully handled by [pexpect](https://github.com/pexpect/pexpect) and the windows equivalent [winpty](https://github.com/rprichard/winpty).
+
+1. Verify git autocompletion works on your machine:
+   - Windows: PowerShell with posh-git installed.
+   - Linux/macOS: Bash with bash-completion and Git completion enabled.
+   - This step is unique to your system, we expect you to already have this setup.
+2. Try it out
+- ```gix backend checko<TAB>``` should be replaced to ```gix backend checkout```
+- This process might be very slow on Windows because PowerShell starup time and dialogue can sometimes take over 1 second.
