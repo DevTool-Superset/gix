@@ -55,9 +55,7 @@ def intercept_git_auto_complete(
 
         wait_for_prompt()
 
-        proc.write(
-            "Import-Module posh-git -ErrorAction SilentlyContinue\r\n"
-        )
+        proc.write("Import-Module posh-git -ErrorAction SilentlyContinue\r\n")
         wait_for_prompt()
 
         proc.write(f'cd "{cwd.absolute()}"\r\n')
@@ -67,12 +65,7 @@ def intercept_git_auto_complete(
 
         output = proc.read()
 
-        cleaned = (
-            strip_ansi(output)
-            .replace("\r", "")
-            .replace("\n", "")
-            .strip()
-        )
+        cleaned = strip_ansi(output).replace("\r", "").replace("\n", "").strip()
 
         if "git " in cleaned:
             parts = cleaned.split(incomplete_command)
@@ -95,9 +88,7 @@ def intercept_git_auto_complete(
         child.expect(r"\$ |# ")
 
         child.sendline(f"cd {cwd.absolute()}")
-        child.sendline(
-            "source /usr/share/bash-completion/bash_completion"
-        )
+        child.sendline("source /usr/share/bash-completion/bash_completion")
 
         child.expect(r"\$ |# ")
 
@@ -114,18 +105,13 @@ def intercept_git_auto_complete(
             except pexpect.TIMEOUT:
                 break
 
-        cleaned = (
-            strip_ansi(output)
-            .replace("\r", "")
-            .replace("\n", "")
-            .strip()
-        )
+        cleaned = strip_ansi(output).replace("\r", "").replace("\n", "").strip()
 
         parts = cleaned.split(incomplete_command)
 
     result = " ".join(parts[1:]).strip()
 
-    return f"{incomplete_command.split(" ")[-1]}{result}"
+    return f"{incomplete_command.split(' ')[-1]}{result}"
 
 
 def get_git_completion(
