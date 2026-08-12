@@ -8,6 +8,7 @@ import typer
 from gix.cli.commands.alias_management import alias_subcommand
 from gix.cli.util import build_engine_from_parent_gix_repo, console
 from gix.exceptions import GixException, AliasNotFoundError
+from gix.manager.git_autocompletion import get_git_completion
 from gix.manager.init import init_gix_list
 from typer.core import TyperGroup
 
@@ -49,6 +50,41 @@ class AliasCommand(click.Command):
         ctx = click.get_current_context()
         run_git_for_alias(ctx.obj["alias"], ctx.obj["git_args"])
 
+    def shell_complete(self, ctx, incomplete):
+        """
+        Completes the git subcommand/args for an already-resolved alias,
+        e.g. `gix repo1 chec<TAB>` -> `checkout`.
+
+        Click hands completion off to the *leaf* command once an alias has
+        been resolved, so this needs to live here rather than on the
+        parent group's shell_complete (which is only consulted while
+        completing subcommand/alias names themselves).
+        """
+        try:
+            gix_path, engine = build_engine_from_parent_gix_repo(Path.cwd())
+        except GixException:
+            return []
+
+        alias = ctx.obj.get("alias") if ctx.obj else None
+        repos = engine.read().get("repos", {})
+        resolved = repos.get(alias) if alias else None
+
+        if not resolved:
+            return []
+
+        git_args = (ctx.obj.get("git_args") or []) + [incomplete]
+        git_command = "git " + " ".join(git_args)
+
+        completion = get_git_completion(
+            cwd=Path(resolved),
+            git_command=git_command,
+        )
+
+        if completion:
+            return [click.shell_completion.CompletionItem(completion)]
+
+        return []
+
 
 class GixGroup(TyperGroup):
     def resolve_command(self, ctx, args):
@@ -65,19 +101,24 @@ class GixGroup(TyperGroup):
         return super().resolve_command(ctx, args)
 
     def shell_complete(self, ctx, incomplete):
+        """
+        Completes alias names at the group level
+        """
         completions = super().shell_complete(ctx, incomplete)
-        if ctx.obj:
-            return completions
-        try:
-            gix_path, engine = build_engine_from_parent_gix_repo(Path.cwd())
+
+        if not ctx.obj:
+            try:
+                gix_path, engine = build_engine_from_parent_gix_repo(Path.cwd())
+            except GixException:
+                return completions
+
             aliases = engine.fetch_aliases()
-        except GixException:
-            aliases = []
-        completions.extend(
-            click.shell_completion.CompletionItem(alias)
-            for alias in aliases
-            if alias.startswith(incomplete)
-        )
+            completions.extend(
+                click.shell_completion.CompletionItem(alias)
+                for alias in aliases
+                if alias.startswith(incomplete)
+            )
+
         return completions
 
 
