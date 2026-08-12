@@ -113,4 +113,6 @@ The absolute pain of 1970s development decisions when it comes to terminals is t
    - This step is unique to your system, we expect you to already have this setup.
 2. Try it out
 - ```gix backend checko<TAB>``` should be replaced to ```gix backend checkout```
-- This process might be very slow on Windows because PowerShell starup time and dialogue can sometimes take over 1 second.
+- This process might be very slow on Windows because PowerShell starup time and dialogue can sometimes take over 1 second. 
+
+> Currently looking for alternatives to this / caching while still staying aware to git branches
