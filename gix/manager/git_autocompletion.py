@@ -13,17 +13,17 @@ def strip_ansi(text: str) -> str:
 
 def intercept_git_auto_complete(
     cwd: Path,
-    original_incomplete_command: str,
+    git_command: str,
 ) -> str:
     """
     Function gets triggered after gix <alias> has been fulfilled and returns git autocompletion.
+
+    `git_command` is the full `git ...` command line typed so far (e.g.
+    "git checko" or "git log -"), already reconstructed by the caller from
+    the resolved alias's git args plus the in-progress word.
     """
     cwd = cwd.resolve()
-
-    incomplete_command = (
-        original_incomplete_command.split("gix ")[1].split(" ")[1:]
-    )
-    incomplete_command = f"git {' '.join(incomplete_command)}".strip()
+    incomplete_command = git_command.strip()
 
     if sys.platform == "win32":
         from winpty import PtyProcess
@@ -125,12 +125,12 @@ def intercept_git_auto_complete(
 
     result = " ".join(parts[1:]).strip()
 
-    return f"{original_incomplete_command.split(" ")[-1]}{result}"
+    return f"{incomplete_command.split(" ")[-1]}{result}"
 
 
 def get_git_completion(
     cwd: Path,
-    incomplete_command: str,
+    git_command: str,
 ) -> str:
     """
     Runs Git completion synchronously and returns the result.
@@ -138,7 +138,7 @@ def get_git_completion(
     try:
         return intercept_git_auto_complete(
             cwd=cwd,
-            original_incomplete_command=incomplete_command,
+            git_command=git_command,
         )
     except Exception:
         return ""

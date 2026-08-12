@@ -72,9 +72,12 @@ class AliasCommand(click.Command):
         if not resolved:
             return []
 
+        git_args = (ctx.obj.get("git_args") or []) + [incomplete]
+        git_command = "git " + " ".join(git_args)
+
         completion = get_git_completion(
             cwd=Path(resolved),
-            incomplete_command=incomplete,
+            git_command=git_command,
         )
 
         if completion:
