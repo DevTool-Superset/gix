@@ -2,3 +2,5 @@
 /.idea/
 /dist/
 /test
+*.pyc
+*/__pycache__
